@@ -1,3 +1,5 @@
+require 'io/wait'
+
 # Game of Life board
 class World
   attr_reader :rows, :cols, :grid, :cells
@@ -32,6 +34,12 @@ class World
     end
 
     live
+  end
+
+  def randomly_populate
+    cells.each do |cell|
+      cell.alive = [true, false].sample
+    end
   end
 
 end
@@ -97,3 +105,69 @@ class Game
   end
 end
 
+# Display starts here
+class Window
+  ALIVE = "o"  
+  DEAD = "" 
+
+  attr_reader :width, :height, :game, :cols, :rows, :title
+
+  def initialize(width, height)
+    @width, @height = width, height
+    @cols, @rows = width, height
+    @title = "Game of Life"
+    @gen = 1
+
+    @game = Game.new(World.new(@rows, @cols))
+    @game.world.randomly_populate
+  end
+
+  def update
+    game.tick
+    @gen += 1
+  end
+
+  def display
+    puts title.center(width * 2)
+    puts "Generation Number: #{@gen}".center(width * 2)
+
+    rows.times do |row|
+      cols.times do |col|
+        cell = game.world.grid[row][col]
+        text = cell.alive? ? ALIVE : DEAD
+        print "#{text} "
+      end
+      puts
+    end
+  end
+
+  def run
+    loop do
+      system('clear') # clears terminal screen
+      display
+      input = char_press
+
+      if input == ' ' # space bar restarts game
+        @gen = 0
+        game.world.randomly_populate
+      end
+
+      sleep(0.05)
+      update
+      break if input == "\e" # ESC key quits
+    end
+  end
+
+  private
+
+  # capture background key press
+  def char_press
+    begin
+      system('stty raw -echo') # turn raw input on
+      input = $stdin.getc if $stdin.ready?
+      input.chr if input
+    ensure
+      system('stty -raw echo') # turn raw input off
+    end
+  end
+end

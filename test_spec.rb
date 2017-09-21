@@ -51,6 +51,14 @@ describe 'Game of Life' do
       end
     end
 
+    context 'randomly_populate' do
+      it 'makes world of randomly alive/dead cells' do
+        expect(world.live_cells.count).to eq(0)
+        world.randomly_populate
+        expect(world.live_cells.count).to be > 0
+      end
+    end
+    
   end
 
   describe Cell do
